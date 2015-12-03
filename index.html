@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="riscv-boom : Berkeley Out-of-Order Machine">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>riscv-boom</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ucb-bar/riscv-boom">View on GitHub</a>
+
+          <h1 id="project_title">riscv-boom</h1>
+          <h2 id="project_tagline">Berkeley Out-of-Order Machine</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ucb-bar/riscv-boom/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ucb-bar/riscv-boom/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="the-berkeley-out-of-order-risc-v-processor" class="anchor" href="#the-berkeley-out-of-order-risc-v-processor" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Berkeley Out-of-Order RISC-V Processor</h1>
+
+<p>This is the source repository for the RV64G RISC-V superscalar Berkeley Out-of-Order Machine (BOOM), 
+written in the <a href="http://chisel.eecs.berkeley.edu">Chisel hardware construction language</a>. BOOM 
+is a synthesizable core that targets ASIC processes. It can run on an FPGA (50 MHz on a zc706), 
+but optimizing it to be an FPGA soft-core is a non-goal.</p>
+
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>BOOM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ISA</td>
+<td>RISC-V (RV64G)</td>
+</tr>
+<tr>
+<td>Synthesizable</td>
+<td>√</td>
+</tr>
+<tr>
+<td>FPGA</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Parameterized</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Floating Point (IEEE 754-2008)</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Atomic Memory Op Support</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Caches</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Viritual Memory</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Boots Linux</td>
+<td>√</td>
+</tr>
+</tbody>
+</table>
+
+<p>See the <a href="https://github.com/ucb-bar/riscv-boom/wiki">wiki</a> for more info.</p>
+
+<p><strong>Requirements</strong></p>
+
+<p>This repository is <strong>NOT A SELF-RUNNING</strong> repository. To instantiate a BOOM core, please use the Rocket chip generator found in the rocket-chip git repository (<a href="https://github.com/ucb-bar/rocket-chip">https://github.com/ucb-bar/rocket-chip</a>).</p>
+
+<p>BOOM depends on the Chisel project. It also depends on <a href="https://github.com/ucb-bar/rocket">Rocket</a>, <a href="https://github.com/ucb-bar/uncore">uncore</a>, and <a href="https://github.com/ucb-bar/junctions">junction</a> source codes.</p>
+
+<p><strong>Directions</strong></p>
+
+<p>To build a BOOM C++ emulator and run BOOM through a couple of simple tests:</p>
+
+<pre><code>   $ git clone https://github.com/ucb-bar/rocket-chip.git
+   $ cd rocket-chip
+   $ git checkout boom
+   $ git submodule update --init
+   $ cd riscv-tools
+   $ git submodule update --init --recursive riscv-tests
+   $ cd ../emulator; make run CONFIG=BOOMCPPConfig
+</code></pre>
+
+<p><strong>More Info</strong></p>
+
+<ul>
+<li>
+<strong>The Wiki</strong> - <a href="https://github.com/ucb-bar/riscv-boom/wiki">https://github.com/ucb-bar/riscv-boom/wiki</a>
+</li>
+<li>
+<strong>Tech Report</strong> - The Berkeley Out-of-Order Machine (BOOM): An Industry-Competitive, Synthesizable, Parameterized RISC-V Processor (<a href="https://www.eecs.berkeley.edu/Pubs/TechRpts/2015/EECS-2015-167.html">https://www.eecs.berkeley.edu/Pubs/TechRpts/2015/EECS-2015-167.html</a>)</li>
+<li>
+<strong>Slides</strong> - RISC-V Workshop #2 (<a href="http://riscv.org/workshop-jun2015/riscv-boom-workshop-june2015.pdf">http://riscv.org/workshop-jun2015/riscv-boom-workshop-june2015.pdf</a>)</li>
+<li>
+<strong>Video</strong> - RISC-V Workshop #2 (<a href="https://www.youtube.com/watch?v=z8UInbiQbdA">https://www.youtube.com/watch?v=z8UInbiQbdA</a>)</li>
+</ul>
+
+<p><strong>Disclaimer!</strong></p>
+
+<p>The RISC-V privileged ISA and platform specs are still in flux. BOOM will do its best to stay up-to-date with it!</p>
+
+<p>BOOM is a work-in-progress and remains in active development.</p>
+
+<p><strong>FAQ</strong></p>
+
+<p>To be filled in as questions are asked...</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">riscv-boom maintained by <a href="https://github.com/ucb-bar">ucb-bar</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-71009023-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
