@@ -98,7 +98,8 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
 
 <p>To build a BOOM C++ emulator and run BOOM through a couple of simple tests:</p>
 
-<pre><code>   $ git clone https://github.com/ucb-bar/rocket-chip.git
+<pre><code>   $ export ROCKETCHIP_ADDONS="boom"
+   $ git clone https://github.com/ucb-bar/rocket-chip.git
    $ cd rocket-chip
    $ git checkout boom
    $ git submodule update --init
