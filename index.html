@@ -88,11 +88,18 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
 
 <p>For documentation on BOOM visit (<a href="https://ccelio.github.io/riscv-boom-doc">https://ccelio.github.io/riscv-boom-doc</a>).</p>
 
-<p><strong>Requirements</strong></p>
+<p><strong>Important!</strong></p>
 
 <p>This repository is <strong>NOT A SELF-RUNNING</strong> repository. To instantiate a BOOM core, please use the Rocket chip generator found in the rocket-chip git repository (<a href="https://github.com/ucb-bar/rocket-chip">https://github.com/ucb-bar/rocket-chip</a>).</p>
 
 <p>BOOM depends on the Chisel project. It also depends on <a href="https://github.com/ucb-bar/rocket">Rocket</a>, <a href="https://github.com/ucb-bar/uncore">uncore</a>, and <a href="https://github.com/ucb-bar/junctions">junction</a> source codes.</p>
+
+
+<p><strong>Requirements</strong></p>
+
+<p>These instructions assume you have already installed the <a href="https://github.com/riscv/riscv-tools">riscv-tools</a> toolchain.</p>
+
+<p>If you have not, follow additional instructions below.</p>                                                              
 
 <p><strong>Directions</strong></p>
 
@@ -107,6 +114,33 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
    $ git submodule update --init --recursive riscv-tests
    $ cd ../emulator; make run CONFIG=BOOMCPPConfig
 </code></pre>
+
+
+<p><strong>Installing the RISC-V Toolchain</strong></p>
+
+<p>The following (modified) instructions will also build the RISC-V toolchain (if  
+you have not already do so). You will need to set the $RISCV environment        
+variable (where the toolchain will be installed) and you will need to add       
+$RISCV/bin to your $PATH.</p>
+
+<pre><code>   $ export RISCV=/path/to/install/riscv/toolchain                
+   $ export PATH="${PATH}:$RISCV/bin"                             
+   $ export ROCKETCHIP_ADDONS="boom"                              
+   $ git clone https://github.com/ucb-bar/rocket-chip.git         
+   $ cd rocket-chip                                               
+   $ git checkout boom                                            
+   $ git submodule update --init                                  
+   $ cd riscv-tools                                               
+   $ git submodule update --init --recursive                      
+   $ ./build.sh                                                   
+   $ cd ../emulator; make run CONFIG=BOOMCPPConfig                
+</code></pre>
+
+
+<p>For more detailed information on the toolchain, visit
+<a href="https://github.com/riscv/riscv-tools">the riscv-tools repository</a>.</p>  
+
+
 
 <p><strong>More Info</strong></p>
 
