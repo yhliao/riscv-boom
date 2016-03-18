@@ -124,7 +124,6 @@ $RISCV/bin to your $PATH.</p>
 
 <pre><code>   $ export RISCV=/path/to/install/riscv/toolchain                
    $ export PATH="${PATH}:$RISCV/bin"                             
-   $ export ROCKETCHIP_ADDONS="boom"                              
    $ git clone https://github.com/ucb-bar/rocket-chip.git         
    $ cd rocket-chip                                               
    $ git checkout boom                                            
@@ -138,6 +137,35 @@ $RISCV/bin to your $PATH.</p>
 
 <p>For more detailed information on the toolchain, visit
 <a href="https://github.com/riscv/riscv-tools">the riscv-tools repository</a>.</p>  
+
+
+<p><strong>Using the gem5 O3 Pipeline Viewer with BOOM</strong></p>
+
+<p>The O3 Pipeline Viewer is an out-of-order pipeline viewer included in the
+gem5 suite. BOOM is capable of generating traces compatible with the
+pipeline viewer, which is useful for understanding what causes
+pipeline stalls and flushes.</p>
+
+<center><img src=images/pipeview.png width="650"></center>
+
+<p>To generate gem5 compatible traces, set O3PIPEVIEW_PRINTF in
+boom/src/main/scala/consts.scala to true:</p>
+
+<pre><code>val O3PIPEVIEW_PRINTF = true // dump trace for O3PipeView from gem5
+</code></pre>
+
+<p>Rebuild and rerun BOOM. You should find the traces (*.out) in 
+emulator/output/. To generate the visualization run:</p>
+
+<pre><code>gem5/util/o3-pipeview.py -o pipeview.out --color TRACE_FILE
+</pre></code>
+
+<p>You can view the visualization by running:</p>
+         
+<pre><code>less -r pipeview.out
+</pre></code>
+
+<p>For more details, visit the <a href=http://www.m5sim.org/Visualization>gem5 wiki</a>.</p>
 
 
 
