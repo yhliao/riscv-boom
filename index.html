@@ -105,13 +105,13 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
 
 <p>To build a BOOM C++ emulator and run BOOM through a couple of simple tests:</p>
 
-<pre><code>   $ git clone https://github.com/ucb-bar/rocket-chip.git
-   $ cd rocket-chip
-   $ git checkout boom
-   $ git submodule update --init
-   $ cd riscv-tools
-   $ git submodule update --init --recursive riscv-tests
-   $ cd ../emulator; make run CONFIG=BOOMCPPConfig
+<pre><code> $ git clone https://github.com/ucb-bar/rocket-chip.git
+  $ cd rocket-chip
+  $ git checkout boom
+  $ git submodule update --init
+  $ cd riscv-tools
+  $ git submodule update --init --recursive riscv-tests
+  $ cd ../emulator; make run CONFIG=BOOMCPPConfig
 </code></pre>
 
 
@@ -122,16 +122,16 @@ you have not already do so). You will need to set the $RISCV environment
 variable (where the toolchain will be installed) and you will need to add       
 $RISCV/bin to your $PATH.</p>
 
-<pre><code>   $ export RISCV=/path/to/install/riscv/toolchain                
-   $ export PATH="${PATH}:$RISCV/bin"                             
-   $ git clone https://github.com/ucb-bar/rocket-chip.git         
-   $ cd rocket-chip                                               
-   $ git checkout boom                                            
-   $ git submodule update --init                                  
-   $ cd riscv-tools                                               
-   $ git submodule update --init --recursive                      
-   $ ./build.sh                                                   
-   $ cd ../emulator; make run CONFIG=BOOMCPPConfig                
+<pre><code> $ export RISCV=/path/to/install/riscv/toolchain                
+  $ export PATH="${PATH}:$RISCV/bin"                             
+  $ git clone https://github.com/ucb-bar/rocket-chip.git         
+  $ cd rocket-chip                                               
+  $ git checkout boom                                            
+  $ git submodule update --init                                  
+  $ cd riscv-tools                                               
+  $ git submodule update --init --recursive                      
+  $ ./build.sh                                                   
+  $ cd ../emulator; make run CONFIG=BOOMCPPConfig                
 </code></pre>
 
 
@@ -157,12 +157,12 @@ boom/src/main/scala/consts.scala to true:</p>
 <p>Rebuild and rerun BOOM. You should find the traces (*.out) in 
 emulator/output/. To generate the visualization run:</p>
 
-<pre><code>   $ path_to_gem5/util/o3-pipeview.py -o pipeview.out --color TRACE_FILE
+<pre><code>$ path_to_gem5/util/o3-pipeview.py -o pipeview.out --color TRACE_FILE
 </pre></code>
 
 <p>You can view the visualization by running:</p>
          
-<pre><code>   $ less -r pipeview.out
+<pre><code>$ less -r pipeview.out
 </pre></code>
 
 <p>For more details (and to download o3-pipeview.py), visit the <a href=http://www.m5sim.org/Visualization>gem5 wiki</a>.</p>
