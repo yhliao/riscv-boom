@@ -83,6 +83,14 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
 <td>Boots Linux</td>
 <td>√</td>
 </tr>
+<tr>
+<td>Privileged Arch v1.9</td>
+<td>√</td>
+</tr>
+<tr>
+<td>External Debug</td>
+<td>√</td>
+</tr>
 </tbody>
 </table>
 
@@ -91,8 +99,6 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
 <p><strong>Important!</strong></p>
 
 <p>This repository is <strong>NOT A SELF-RUNNING</strong> repository. To instantiate a BOOM core, please use the Rocket chip generator found in the rocket-chip git repository (<a href="https://github.com/ucb-bar/rocket-chip">https://github.com/ucb-bar/rocket-chip</a>).</p>
-
-<p>BOOM depends on the Chisel project. It also depends on <a href="https://github.com/ucb-bar/rocket">Rocket</a>, <a href="https://github.com/ucb-bar/uncore">uncore</a>, and <a href="https://github.com/ucb-bar/junctions">junction</a> source codes.</p>
 
 
 <p><strong>Requirements</strong></p>
@@ -103,15 +109,13 @@ but optimizing it to be an FPGA soft-core is a non-goal.</p>
 
 <p><strong>Directions</strong></p>
 
-<p>To build a BOOM C++ emulator and run BOOM through a couple of simple tests:</p>
+<p>To build a BOOM Verilator emulator and run BOOM through a couple of simple tests:</p>
 
 <pre><code> $ git clone https://github.com/ucb-bar/rocket-chip.git
   $ cd rocket-chip
   $ git checkout boom
   $ git submodule update --init
-  $ cd riscv-tools
-  $ git submodule update --init --recursive riscv-tests
-  $ cd ../emulator; make run CONFIG=BOOMCPPConfig
+  $ cd emulator; make run CONFIG=BOOMConfig
 </code></pre>
 
 
@@ -131,7 +135,7 @@ $RISCV/bin to your $PATH.</p>
   $ cd riscv-tools                                               
   $ git submodule update --init --recursive                      
   $ ./build.sh                                                   
-  $ cd ../emulator; make run CONFIG=BOOMCPPConfig                
+  $ cd ../emulator; make run CONFIG=BOOMConfig                
 </code></pre>
 
 
