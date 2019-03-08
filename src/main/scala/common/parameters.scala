@@ -47,6 +47,7 @@ case class BoomCoreParams(
    enableBTB: Boolean = true,
    enableBpdUModeOnly: Boolean = false,
    enableBpdUSModeHistory: Boolean = false,
+   useSimpleBranchHistory: Boolean = false,
    useAtomicsOnlyForIO: Boolean = false,
    ftq: FtqParameters = FtqParameters(),
    btb: BoomBTBParameters = BoomBTBParameters(),
@@ -184,6 +185,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
    val ENABLE_BPD_UMODE_ONLY = boomParams.enableBpdUModeOnly
    val ENABLE_BPD_USHISTORY = boomParams.enableBpdUSModeHistory
    // What is the maximum length of global history tracked?
+   val useSimpleBranchHistory = boomParams.useSimpleBranchHistory
    var GLOBAL_HISTORY_LENGTH = 0
    // What is the physical length of the VeryLongHistoryRegister? This must be
    // able to handle the GHIST_LENGTH as well as being able hold all speculative

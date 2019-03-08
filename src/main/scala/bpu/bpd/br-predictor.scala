@@ -212,32 +212,31 @@ abstract class BoomBrPredictor(
          r_f4_history,
          r_f1_history)) // valid for f2_redirect
 
-   // Hash target into history.
-   new_history := UpdateHistoryHash(f0_history, io.req.bits.addr)
-
    //************************************************
    // Branch Prediction (F1 Stage)
 
    val f1_valid = RegNext(io.req.valid) && !(io.fe_clear || io.f2_redirect || io.f4_redirect)
 
    // Do we hash in a new history?
-   val use_new_hash =
+   val taken =
       (io.ftq_restore.valid && io.ftq_restore.bits.taken) ||
       (io.f4_redirect && io.f4_taken) ||
       io.f2_redirect
+   
+   // Hash target into history.
+   if (useSimpleBranchHistory)
+      new_history := f0_history << 1 | taken.asUInt
+   else
+      new_history := UpdateHistoryHash(f0_history, io.req.bits.addr)
 
    r_f1_history :=
       Mux(io.f2_replay,
          r_f2_history,
-      Mux(io.ftq_restore.valid && !io.ftq_restore.bits.taken,
-         io.ftq_restore.bits.history,
-      Mux(io.f4_redirect && !io.f4_taken,
-         r_f4_history,
-      Mux(use_new_hash,
+      Mux(taken || useSimpleBranchHistory.B,
          new_history,
-         r_f1_history))))
+         f0_history))
 
-   assert (!io.f2_redirect || r_f2_history === r_f1_history,
+   assert (!io.f2_redirect || r_f2_history === r_f1_history || useSimpleBranchHistory.B,
       "[bpd] if a F2 redirect occurs, F2-hist should equal F1-hist.")
 
    //************************************************
