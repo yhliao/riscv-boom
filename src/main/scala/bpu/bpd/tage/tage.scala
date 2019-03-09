@@ -204,7 +204,8 @@ class TageBrPredictor(
 
    private def IdxHash(addr: UInt, hist: UInt, hlen: Int, idx_sz: Int): UInt =
    {
-      val idx = Cat(Fold(hist, idx_sz, hlen), addr(4)) ^ (addr >> 5)
+      val k = log2Ceil(fetch_width)
+      val idx = Fold(hist, idx_sz, hlen) ^ (addr >> k+2) ^ (addr(k+1,2) << idx_sz-k)
       idx
    }
 
@@ -444,7 +445,7 @@ class TageBrPredictor(
          // - a) if find an entry u_k that == 0, then allocate T_k
          // - b) ELSE decrement u_counters from Tj where (i<j<=max), or just (i<j<max).
          //    b.i) randomize r, where i<=(i+r)<k<=max, to prevent ping-ponging
-         //       where new allocations simply over-write once another before the u-bit
+         //       where new allocations simply over-write one another before the u-bit
          //       can be strengthened.
 
          val temp = Mux(rand === 3.U, 2.U,
