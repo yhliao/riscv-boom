@@ -72,6 +72,7 @@ class BranchPredictionStage(fetch_width: Int)(implicit p: Parameters) extends Bo
       val f2_stall      = Input(Bool()) // f3 is not ready -- back-pressure the f2 stage.
       val f2_replay     = Input(Bool()) // I$ is replaying S2 PC into S0 again (S2 backed up or failed).
       val f2_redirect   = Input(Bool()) // I$ is being redirected from F2.
+      val f2_aligned_pc = Input(UInt(vaddrBits.W))
 
       // Fetch3
       val f3_is_br      = Input(Vec(fetch_width, Bool())) // mask of branches from I$
@@ -140,20 +141,18 @@ class BranchPredictionStage(fetch_width: Int)(implicit p: Parameters) extends Bo
 
    //************************************************
    // Update the RAS
-   // TODO XXX  reenable RAS
 
    // update RAS based on BTB's prediction information (or the branch-check correction).
-//   val jmp_idx = f2_btb.bits.cfi_idx
+   val jmp_idx = btb.io.resp.bits.cfi_idx
 
    btb.io.ras_update := io.f3_ras_update
-   btb.io.ras_update.valid := false.B // TODO XXX renable RAS (f2_btb.valid || io.f3_ras_update.valid) &&
-                                      // !io.fetch_stalled
-//   when (f2_btb.valid)
-//   {
-//      btb.io.ras_update.bits.is_call      := BpredType.isCall(f2_btb.bits.bpd_type)
-//      btb.io.ras_update.bits.is_ret       := BpredType.isReturn(f2_btb.bits.bpd_type)
-//      btb.io.ras_update.bits.return_addr  := f2_aligned_pc + (jmp_idx << 2.U) + 4.U
-//   }
+   btb.io.ras_update.valid := btb.io.resp.valid && !io.f2_stall || io.f3_ras_update.valid && !io.f3_stall
+   when (btb.io.resp.valid)
+   {
+      btb.io.ras_update.bits.is_call      := BpredType.isCall(btb.io.resp.bits.bpd_type)
+      btb.io.ras_update.bits.is_ret       := BpredType.isReturn(btb.io.resp.bits.bpd_type)
+      btb.io.ras_update.bits.return_addr  := io.f2_aligned_pc + (jmp_idx << 2.U) + 4.U
+   }
 
    //************************************************
    // Update the BTB/BIM

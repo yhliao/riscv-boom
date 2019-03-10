@@ -211,10 +211,8 @@ class RAS(nras: Int, coreInstBytes: Int)
     */
    def isEmpty: Bool = count === 0.U
 
-   //def clear(): Unit = count := 0.U
-
-   private val count = Reg(UInt(log2Ceil(nras+1).W))
-   private val pos = Reg(UInt(log2Ceil(nras).W))
+   private val count = RegInit(0.U(log2Ceil(nras+1).W))
+   private val pos = RegInit(0.U(log2Ceil(nras).W))
    private val stack = Reg(Vec(nras, UInt()))
 }
 
