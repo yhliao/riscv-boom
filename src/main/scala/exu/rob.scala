@@ -227,7 +227,8 @@ class Rob(
    val rob_tail = RegInit(0.U(log2Ceil(num_rob_rows).W))
    val rob_tail_idx = rob_tail << log2Ceil(width).U
 
-   val r_tail_bump = Reg(Bool())
+   // Did the tail pointer move (from a row dispatch, mispredict, or completed rollback) on the last cycle?
+   val r_tail_moved = Reg(Bool())
 
    val will_commit         = Wire(Vec(width, Bool()))
    val can_commit          = Wire(Vec(width, Bool()))
@@ -286,11 +287,16 @@ class Rob(
       val rob_exception = Mem(num_rob_rows, Bool())
       val rob_fflags    = Mem(num_rob_rows, Bits(freechips.rocketchip.tile.FPConstants.FLAGS_SZ.W))
 
+      // Mask out implicitly invalid entries.
+      val rob_val_debug = Vec((0 until num_rob_rows).map(i => rob_val(i) &&
+         (((i.U < rob_tail) ^ (i.U < rob_head) ^ (rob_tail < rob_head)) ||
+            i.U === rob_tail && !r_tail_moved)))
+
       //-----------------------------------------------
       // Dispatch: Add Entry to ROB
 
       // Reuse ROB dispatch port for invalidating misspeculated entries.
-      // Similar to how commit port is reused for exception rollback.
+      // Similar to how the commit port is reused for exception rollback.
       val disp_idx = Mux(io.brinfo.mispredict, GetRowIdx(io.brinfo.rob_idx), rob_tail)
       when (io.enq_valids(w))
       {
@@ -303,7 +309,7 @@ class Rob(
          rob_uop(disp_idx).stat_brjmp_mispredicted := false.B
 
          // Entries outside of head/tail range are now implicitly invalid.
-         //assert (rob_val(rob_tail) === false.B, "[rob] overwriting a valid entry.")
+         assert (rob_val_debug(rob_tail) === false.B, "[rob] overwriting a valid entry.")
          assert ((io.enq_uops(w).rob_idx >> log2Ceil(width)) === rob_tail)
       }
       .elsewhen (io.brinfo.mispredict)
@@ -315,12 +321,14 @@ class Rob(
             rob_val(disp_idx) := false.B
          }
       }
-      .elsewhen (r_tail_bump)
+      .elsewhen (r_tail_moved)
       {
          // Invalidate entries which have not been filled in the first cycle following a tail bump.
          rob_val(disp_idx) := false.B
          rob_uop(disp_idx).inst := BUBBLE // just for debug purposes
       }
+      // Branch mispredicts should invalidate enqueueing instructions.
+      assert (!(io.brinfo.mispredict && io.enq_valids(w)))
 
       //-----------------------------------------------
       // Writeback
@@ -421,7 +429,7 @@ class Rob(
       io.commit.uops(w)       := rob_uop(com_idx)
 
       io.commit.rbk_valids(w) :=
-                              (rob_state === s_rollback) && !r_tail_bump &&
+                              (rob_state === s_rollback) && !r_tail_moved &&
                               rob_val(com_idx) &&
                               (rob_uop(com_idx).dst_rtype === RT_FIX || rob_uop(com_idx).dst_rtype === RT_FLT) &&
                               (!(ENABLE_COMMIT_MAP_TABLE.B))
@@ -701,7 +709,7 @@ class Rob(
    // -----------------------------------------------
    // ROB Tail Logic
 
-   r_tail_bump := false.B
+   r_tail_moved := false.B
 
    when (rob_state === s_rollback && rob_tail =/= rob_head)
    {
@@ -710,12 +718,12 @@ class Rob(
    .elsewhen (io.brinfo.mispredict)
    {
       rob_tail := WrapInc(GetRowIdx(io.brinfo.rob_idx), num_rob_rows)
-      r_tail_bump := true.B
+      r_tail_moved := true.B
    }
    .elsewhen (io.enq_valids.asUInt =/= 0.U && !io.enq_partial_stall)
    {
       rob_tail := WrapInc(rob_tail, num_rob_rows)
-      r_tail_bump := true.B
+      r_tail_moved := true.B
    }
 
    if (ENABLE_COMMIT_MAP_TABLE)
@@ -724,6 +732,7 @@ class Rob(
       {
          rob_tail := 0.U
          rob_head := 0.U
+         r_tail_moved := true.B
       }
    }
 
@@ -778,6 +787,7 @@ class Rob(
             when (io.empty)
             {
                rob_state := s_normal
+               r_tail_moved := true.B
             }
          }
          is (s_wait_till_empty)
