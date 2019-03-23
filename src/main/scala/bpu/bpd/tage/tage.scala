@@ -204,8 +204,9 @@ class TageBrPredictor(
 
    private def IdxHash(addr: UInt, hist: UInt, hlen: Int, idx_sz: Int): UInt =
    {
-      val k = log2Ceil(fetch_width)
-      val idx = Fold(hist, idx_sz, hlen) ^ (addr >> k+2) ^ (addr(k+1,2) << idx_sz-k)
+      val j = log2Ceil(instBytes)               // How many sub-instruction bits to ignore?
+      val k = log2Ceil(fetch_width/nIcBanks)    // How many bits to distinguish between instructions in a bank?
+      val idx = Fold(hist, idx_sz, hlen) ^ (addr >> j+k) ^ (addr(j+k-1,j) << idx_sz-k)
       idx
    }
 

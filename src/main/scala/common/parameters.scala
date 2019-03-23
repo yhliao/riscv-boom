@@ -223,6 +223,9 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
       BPD_INFO_SIZE = RandomBrPredictor.GetRespInfoSize(p)
    }
 
+   val instBytes = if (boomParams.useCompressed) 2 else 4
+   val nIcBanks = if (instBytes*fetchWidth > 8) 2 else 1
+
    //************************************
    // Extra Knobs and Features
    val ENABLE_COMMIT_MAP_TABLE = boomParams.enableCommitMapTable
