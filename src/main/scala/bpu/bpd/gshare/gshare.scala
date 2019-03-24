@@ -107,12 +107,13 @@ class GShareBrPredictor(
    with HasGShareParameters
 {
    require (log2Ceil(nSets) == idx_sz)
+   val bankSz = row_sz/nIcBanks
 
    private def Hash (addr: UInt, hist: UInt) =
    {
       // fold history if too big for our table
       val folded_history = Fold (hist, idx_sz, history_length)
-      ((addr >> (log2Ceil(fetch_width*coreInstBytes).U)) ^ folded_history)(idx_sz-1,0)
+      (addr ^ folded_history)(idx_sz-1,0)
    }
 
    // for initializing the counter table, this is the value to reset the row to.
@@ -200,18 +201,21 @@ class GShareBrPredictor(
    //------------------------------------------------------------
    // Predictor state.
 
-   val counter_table = SyncReadMem(nSets, UInt(row_sz.W))
+   val counter_table = BankedSyncReadMem(nSets, nIcBanks, UInt(bankSz.W))
 
    //------------------------------------------------------------
    // Perform hash in F1.
 
-   val s1_ridx = Hash(this.r_f1_fetchpc, this.r_f1_history)
+   val f1_fetchbundle_row_idx = this.r_f1_fetchpc >> log2Ceil(fetch_width*coreInstBytes).U
+   val f1_fetchbundle_bank_idx = this.r_f1_fetchpc(log2Ceil(fetch_width*coreInstBytes)-1, log2Ceil(fetch_width/nIcBanks*coreInstBytes))
+   val s1_ridx = Hash(f1_fetchbundle_row_idx, this.r_f1_history)
+   val s1_next_ridx = Hash(f1_fetchbundle_row_idx + 1.U, this.r_f1_history)
 
    //------------------------------------------------------------
    // Get prediction in F2 (and store into an ElasticRegister).
 
    // return data to superclass (via f2_resp bundle).
-   val s2_out = counter_table.read(s1_ridx, this.f1_valid)
+   val s2_out = counter_table.read(s1_ridx, s1_next_ridx, f1_fetchbundle_bank_idx, this.f1_valid)
 
    val q_s3_resp = withReset(reset.toBool || io.fe_clear || io.f4_redirect)
       {Module(new ElasticReg(new GShareResp(fetch_width, idx_sz)))}
@@ -234,7 +238,10 @@ class GShareBrPredictor(
    // Update counter table.
 
    val com_info = (io.commit.bits.info).asTypeOf(new GShareResp(fetch_width, idx_sz))
-   val com_idx = Hash(io.commit.bits.fetch_pc, io.commit.bits.history)(idx_sz-1,0)
+   val com_pc_row_idx = io.commit.bits.fetch_pc
+   val com_pc_bank_idx = io.commit.bits.fetch_pc
+   val com_idx = Hash(com_pc_row_idx, io.commit.bits.history)(idx_sz-1,0)
+   val com_nidx = Hash(com_pc_row_idx + 1.U, io.commit.bits.history)(idx_sz-1,0)
 
    val wen = io.commit.valid || (fsm_state === s_clear)
    when (wen)

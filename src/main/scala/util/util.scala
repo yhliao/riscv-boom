@@ -472,3 +472,53 @@ class BranchKillableQueue[T <: boom.common.HasBoomUOP](gen: T, entries: Int)
                         entries.asUInt + ptr_diff, ptr_diff))
    }
 }
+
+object RotateVecRight[T <: chisel3.core.Data] {
+  def apply(in: Vec[T], shift: UInt): Vec[T] = {
+    val n = in.size
+    depth = log2Ceil(n)
+    val rot = (0 until depth).foldLeft(in)((vec, i) => (0 until n).map(k => Mux(shift(i), vec((k + (1 << i) % n)), vec(k))))
+    VecInit(rot)
+  }
+}
+
+object RotateVecLeft[T <: chisel3.core.Data] {
+  def apply(in: Vec[T], shift: UInt): Vec[T] = {
+    val n = in.size
+    depth = log2Ceil(n)
+    val rot = (0 until depth).foldLeft(in)((vec, i) => (0 until n).map(k => Mux(shift(i), vec((k - (1 << i)) % n), vec(k))))
+    VecInit(rot)
+  }
+}
+
+// Wraps SyncReadMem to implement banked memory arrays.
+class BankedSyncReadMem[T <: chisel3.core.Data](nRows: Int, nBanks: Int, gen: T) {
+  def read(row_idx: UInt, nrow_idx: UInt, bank_idx: UInt) { 
+    val row_idxs = (0 until nBanks).map(i => Mux(i.U < bank_idx, nrow_idx, row_idx))
+    val row = VecInit((mem_banks zip row_idxs).map{case (bank, idx) => bank.read(idx}))
+    RotateVecRight(row, bank_idx)
+  }
+  
+  def read(idx: UInt) {
+    val bank_idx = idx(bankBits-1,0)
+    val row_idx = idx >> bankBits
+    read(row_idx, WrapInc(row_idx, nRows), bank_idx) 
+  }
+
+  def write(row_idx: UInt, nrow_idx: UInt, bank_idx: UInt, data: Vec[T]) { 
+    val row_idxs = (0 until nBanks).map(i => Mux(i.U < bank_idx, WrapInc(row_idx, nRows), row_idx))
+    val row = RotateVecLeft(data, bank_idx)
+    for (0 until nBanks)
+      mem_banks(i).write(row_idxs(i), row(i))
+  }
+
+  def write(idx: UInt, data: Vec[T]) {
+    val bank_idx = idx(bankBits-1,0)
+    val row_idx = idx >> bankBits
+    write(row_idx, WrapInc(row_idx, nRows), bank_idx, data)
+  }
+
+  require(isPow2(nBanks))
+  private val bankBits = log2Ceil(nBanks)
+  private val mem_banks = Array.fill(nBanks){SyncReadMem(nRows, gen)}
+}

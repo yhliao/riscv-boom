@@ -31,7 +31,7 @@ import freechips.rocketchip.rocket.RocketCoreParams
 import boom.common._
 import boom.exu._
 import boom.exu.BranchUnitResp
-import boom.util.ElasticReg
+import boom.util.{ElasticReg, Fold}
 
 /**
  * This is the response packet from the branch predictor. The predictor is
@@ -178,30 +178,10 @@ abstract class BoomBrPredictor(
 
    private def UpdateHistoryHash(old: UInt, addr: UInt): UInt =
    {
-      val ret = Wire(UInt(history_length.W))
-      ret := DontCare
-
-      //ret := ((addr >> 4.U) & 0xf.U) | (old << 4.U) -- for debugging
       val pc = addr >> log2Ceil(coreInstBytes)
-      val foldpc = (pc >> 17) ^ pc
-      val shamt = 2
-      val sz0 = 6
-      if (history_length < (sz0*2+1))
-      {
-         (old << 1.U) | (foldpc(5) ^ foldpc(6))
-      }
-      else
-      {
-         val o0 = old(sz0-1,0)
-         val o1 = old(2*sz0-1,sz0)
-
-         val h0 = foldpc(sz0-1,0)
-         val h1 = o0
-         val h2 = (o1 ^ (o1 >> (sz0/2).U))(sz0/2-1,0)
-         val min = h0.getWidth + h1.getWidth
-         ret := Cat(old(history_length-1, min), h2, h1, h0)
-         ret
-      }
+      val foldpc = Fold(pc, history_length, pc.getWidth)
+      val ret = (old << 1.U ^ foldpc)(history_length-1, 0)
+      ret
    }
 
    // As predictions come in (or pipelines are flushed/replayed), we need to correct the history.
