@@ -21,11 +21,12 @@ package boom.bpu
 import chisel3._
 import chisel3.util._
 import chisel3.core.withReset
+import chisel3.core.dontTouch
 
 import freechips.rocketchip.config.{Parameters, Field}
 
 import boom.common._
-import boom.util.{ElasticReg, Fold}
+import boom.util.{ElasticReg, Fold, BankedSyncReadMem}
 
 /**
  * GShare configuration parameters used in configurations
@@ -108,6 +109,8 @@ class GShareBrPredictor(
 {
    require (log2Ceil(nSets) == idx_sz)
    val bankSz = row_sz/nIcBanks
+   val bankBit = log2Ceil(fetch_width*instBytes/nIcBanks)
+   val rowBit = log2Ceil(fetch_width*instBytes)
 
    private def Hash (addr: UInt, hist: UInt) =
    {
@@ -163,7 +166,7 @@ class GShareBrPredictor(
 
    // Update the counters in a row (only one if mispredicted or all counters to strenthen).
    // Return the new row.
-   private def updateEntireCounterRow (old_row: UInt, was_mispredicted: Bool, cfi_idx: UInt, was_taken: Bool): UInt =
+   private def updateEntireCounterRow(old_row: UInt, was_mispredicted: Bool, cfi_idx: UInt, was_taken: Bool): UInt =
    {
       val row = Wire(UInt(row_sz.W))
 
@@ -186,9 +189,8 @@ class GShareBrPredictor(
    val s_reset :: s_wait :: s_clear :: s_idle :: Nil = Enum(4)
    val fsm_state = RegInit(s_reset)
    val nResetLagCycles = 128
-   val nBanks = 1
    val (lag_counter, lag_done) = Counter(fsm_state === s_wait, nResetLagCycles)
-   val (clear_row_addr, clear_done) = Counter(fsm_state === s_clear, nSets/nBanks)
+   val (clear_row_addr, clear_done) = Counter(fsm_state === s_clear, nSets)
 
    switch (fsm_state)
    {
@@ -201,13 +203,13 @@ class GShareBrPredictor(
    //------------------------------------------------------------
    // Predictor state.
 
-   val counter_table = BankedSyncReadMem(nSets, nIcBanks, UInt(bankSz.W))
+   val counter_table = new BankedSyncReadMem(nSets, nIcBanks, UInt(bankSz.W))
 
    //------------------------------------------------------------
    // Perform hash in F1.
 
-   val f1_fetchbundle_row_idx = this.r_f1_fetchpc >> log2Ceil(fetch_width*coreInstBytes).U
-   val f1_fetchbundle_bank_idx = this.r_f1_fetchpc(log2Ceil(fetch_width*coreInstBytes)-1, log2Ceil(fetch_width/nIcBanks*coreInstBytes))
+   val f1_fetchbundle_row_idx = this.r_f1_fetchpc >> rowBit.U
+   val f1_fetchbundle_bank_idx = this.r_f1_fetchpc(rowBit-1, bankBit)
    val s1_ridx = Hash(f1_fetchbundle_row_idx, this.r_f1_history)
    val s1_next_ridx = Hash(f1_fetchbundle_row_idx + 1.U, this.r_f1_history)
 
@@ -215,7 +217,7 @@ class GShareBrPredictor(
    // Get prediction in F2 (and store into an ElasticRegister).
 
    // return data to superclass (via f2_resp bundle).
-   val s2_out = counter_table.read(s1_ridx, s1_next_ridx, f1_fetchbundle_bank_idx, this.f1_valid)
+   val s2_out = counter_table.read(s1_ridx, s1_next_ridx, f1_fetchbundle_bank_idx, this.f1_valid).reduce((row, bank) => Cat(bank, row))
 
    val q_s3_resp = withReset(reset.toBool || io.fe_clear || io.f4_redirect)
       {Module(new ElasticReg(new GShareResp(fetch_width, idx_sz)))}
@@ -236,10 +238,10 @@ class GShareBrPredictor(
 
    //------------------------------------------------------------
    // Update counter table.
-
+ 
    val com_info = (io.commit.bits.info).asTypeOf(new GShareResp(fetch_width, idx_sz))
-   val com_pc_row_idx = io.commit.bits.fetch_pc
-   val com_pc_bank_idx = io.commit.bits.fetch_pc
+   val com_pc_row_idx = io.commit.bits.fetch_pc >> rowBit.U
+   val com_pc_bank_idx = io.commit.bits.fetch_pc(rowBit-1, bankBit)
    val com_idx = Hash(com_pc_row_idx, io.commit.bits.history)(idx_sz-1,0)
    val com_nidx = Hash(com_pc_row_idx + 1.U, io.commit.bits.history)(idx_sz-1,0)
 
@@ -252,10 +254,11 @@ class GShareBrPredictor(
          io.commit.bits.miss_cfi_idx,
          io.commit.bits.taken)
 
-      val waddr = Mux(fsm_state === s_clear, clear_row_addr, com_idx)
+      val waddr_idx = Mux(fsm_state === s_clear, clear_row_addr, com_idx)
+      val waddr_bank = Mux(fsm_state === s_clear, 0.U, com_pc_bank_idx)
       val wdata = Mux(fsm_state === s_clear, initRowValue(), new_row)
 
-      counter_table.write(waddr, wdata)
+      counter_table.write(waddr_idx, com_nidx, com_pc_bank_idx, VecInit((0 until nIcBanks).map(i => wdata((i+1)*bankSz-1, i*bankSz))))
    }
 
    // First commit will have garbage so ignore it.
