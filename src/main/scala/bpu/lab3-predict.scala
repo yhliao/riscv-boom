@@ -5,10 +5,10 @@ import freechips.rocketchip.config.{Parameters, Field}
 
 case class Lab3Parameters(
   enabled: Boolean = true,
-  num_entries_local: Int = 128,
-  history_length_local: Int = 5,
+  num_entries_local: Int = 256,
+  history_length_local: Int = 10,
   history_length: Int = 10,
-  info_size: Int = 0
+  info_size: Int = 30
   )
 
 case object Lab3Key extends Field[Lab3Parameters]
@@ -27,8 +27,8 @@ class TournamentResp(gindex_sz: Int, lindex_sz: Int, lhist_sz: Int) extends Bund
 
 class Lab3BrPredictor(
     fetch_width: Int,
-    num_entries_local: Int = 256,
-    history_length_local: Int = 10,
+    num_entries_local: Int,
+    history_length_local: Int,
     history_length: Int)(implicit p: Parameters)
       extends BrPredictor(fetch_width, history_length)(p)
 {
