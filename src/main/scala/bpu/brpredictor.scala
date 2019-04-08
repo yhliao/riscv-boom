@@ -152,6 +152,8 @@ object BrPredictor
       {
          br_predictor = Module(new Lab3BrPredictor(
             fetch_width = fetch_width,
+            num_entries_local = p(Lab3Key).num_entries_local,
+            history_length_local = p(Lab3Key).history_length_local,
             history_length = p(Lab3Key).history_length
          ))
       }
